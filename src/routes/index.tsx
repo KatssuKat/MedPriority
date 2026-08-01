@@ -92,12 +92,6 @@ function Overview() {
               >
                 View ER board
               </Link>
-              <Link
-                to="/triage"
-                className="inline-flex items-center gap-2 px-4 h-11 rounded-lg border border-border bg-surface text-sm font-medium hover:bg-muted"
-              >
-                My patients
-              </Link>
             </div>
           </div>
         </section>

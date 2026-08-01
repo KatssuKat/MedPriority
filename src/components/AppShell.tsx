@@ -1,6 +1,14 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Activity, LayoutDashboard, Stethoscope, Tablet, BarChart3, Bell, Search } from "lucide-react";
-import { ReactNode } from "react";
+import {
+  Activity,
+  BarChart3,
+  Bell,
+  LayoutDashboard,
+  Search,
+  Stethoscope,
+  Tablet,
+} from "lucide-react";
+import type { ReactNode } from "react";
 
 const nav = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
@@ -21,7 +29,9 @@ export function AppShell({ children, dense = false }: { children: ReactNode; den
           </div>
           <div>
             <div className="font-display text-lg font-semibold tracking-tight">MedPriority</div>
-            <div className="text-[11px] uppercase tracking-widest text-sidebar-foreground/60">Triage AI</div>
+            <div className="text-[11px] uppercase tracking-widest text-sidebar-foreground/60">
+              Triage AI
+            </div>
           </div>
         </div>
         <nav className="p-3 flex-1 space-y-1">
@@ -50,7 +60,9 @@ export function AppShell({ children, dense = false }: { children: ReactNode; den
               <span className="size-2 rounded-full bg-success pulse-dot" />
               System operational
             </div>
-            <div className="mt-1 text-[11px] text-sidebar-foreground/60">All AI models nominal · v4.2.1</div>
+            <div className="mt-1 text-[11px] text-sidebar-foreground/60">
+              All AI models nominal · v4.2.1
+            </div>
           </div>
         </div>
       </aside>
@@ -72,7 +84,9 @@ export function AppShell({ children, dense = false }: { children: ReactNode; den
               <span className="absolute top-2 right-2 size-2 rounded-full bg-destructive" />
             </button>
             <div className="flex items-center gap-2 pl-3 border-l border-border">
-              <div className="size-9 rounded-full bg-gradient-to-br from-primary to-info text-primary-foreground flex items-center justify-center text-xs font-semibold">DR</div>
+              <div className="size-9 rounded-full bg-gradient-to-br from-primary to-info text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                DR
+              </div>
               <div className="text-xs leading-tight">
                 <div className="font-medium">Dr. Reyes</div>
                 <div className="text-muted-foreground">Charge Nurse</div>

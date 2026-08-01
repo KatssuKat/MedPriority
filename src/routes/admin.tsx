@@ -1,14 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  Activity,
+  AlertTriangle,
+  Clock,
+  Download,
+  FileBarChart,
+  type LucideIcon,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { Download, TrendingUp, TrendingDown, Users, Clock, Activity, AlertTriangle, FileBarChart } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
   head: () => ({ meta: [{ title: "Analytics · MedPriority" }] }),
 });
 
-const flowData = [38, 42, 51, 60, 72, 83, 91, 88, 76, 68, 59, 64, 71, 80, 74, 62, 55, 48, 42, 36, 33, 30, 28, 31];
-const waitData = [12, 14, 16, 18, 22, 28, 31, 27, 22, 19, 17, 18, 20, 24, 21, 18, 16, 15, 14, 12, 11, 10, 11, 13];
+const flowData = [
+  38, 42, 51, 60, 72, 83, 91, 88, 76, 68, 59, 64, 71, 80, 74, 62, 55, 48, 42, 36, 33, 30, 28, 31,
+];
+const waitData = [
+  12, 14, 16, 18, 22, 28, 31, 27, 22, 19, 17, 18, 20, 24, 21, 18, 16, 15, 14, 12, 11, 10, 11, 13,
+];
 
 function Admin() {
   return (
@@ -17,14 +31,23 @@ function Admin() {
         <div className="flex items-end justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-semibold">Operational Analytics</h1>
-            <p className="text-sm text-muted-foreground">Last 24 hours · St. Vincent's General · Emergency Department</p>
+            <p className="text-sm text-muted-foreground">
+              Last 24 hours · St. Vincent's General · Emergency Department
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <select className="h-10 px-3 rounded-lg border border-border bg-surface text-sm">
-              <option>Last 24 hours</option><option>Last 7 days</option><option>Last 30 days</option><option>YTD</option>
+              <option>Last 24 hours</option>
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>YTD</option>
             </select>
-            <button className="h-10 px-4 rounded-lg border border-border bg-surface text-sm flex items-center gap-2"><FileBarChart className="size-4" /> Schedule report</button>
-            <button className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2"><Download className="size-4" /> Export PDF</button>
+            <button className="h-10 px-4 rounded-lg border border-border bg-surface text-sm flex items-center gap-2">
+              <FileBarChart className="size-4" /> Schedule report
+            </button>
+            <button className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2">
+              <Download className="size-4" /> Export PDF
+            </button>
           </div>
         </div>
 
@@ -80,13 +103,15 @@ function Admin() {
             <h3 className="font-semibold">Department saturation</h3>
             <p className="text-xs text-muted-foreground">Capacity utilization by zone</p>
             <div className="mt-5 space-y-4">
-              {([
-                ["Resuscitation", 95, "bg-priority-critical"],
-                ["Trauma", 82, "bg-priority-high"],
-                ["Acute care", 71, "bg-priority-medium"],
-                ["Pediatrics", 48, "bg-priority-low"],
-                ["Observation", 36, "bg-priority-minor"],
-              ] as const).map(([n, v, c]) => (
+              {(
+                [
+                  ["Resuscitation", 95, "bg-priority-critical"],
+                  ["Trauma", 82, "bg-priority-high"],
+                  ["Acute care", 71, "bg-priority-medium"],
+                  ["Pediatrics", 48, "bg-priority-low"],
+                  ["Observation", 36, "bg-priority-minor"],
+                ] as const
+              ).map(([n, v, c]) => (
                 <div key={n}>
                   <div className="flex items-center justify-between text-sm">
                     <span>{n}</span>
@@ -113,10 +138,14 @@ function Admin() {
                 ["Critical Case Review", "May 2026", "PDF · 950 KB"],
               ].map(([t, d, s]) => (
                 <li key={t} className="py-3 flex items-center gap-3">
-                  <div className="size-9 rounded-lg bg-muted flex items-center justify-center"><FileBarChart className="size-4 text-muted-foreground" /></div>
+                  <div className="size-9 rounded-lg bg-muted flex items-center justify-center">
+                    <FileBarChart className="size-4 text-muted-foreground" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{t}</div>
-                    <div className="text-xs text-muted-foreground">{d} · {s}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {d} · {s}
+                    </div>
                   </div>
                   <button className="size-9 rounded-lg border border-border bg-surface flex items-center justify-center hover:bg-muted">
                     <Download className="size-4" />
@@ -131,16 +160,39 @@ function Admin() {
   );
 }
 
-function BigKpi({ icon: Icon, label, value, delta, up, tone }: { icon: any; label: string; value: string; delta: string; up?: boolean; tone?: "warn" | "danger" }) {
-  const accent = tone === "danger" ? "text-destructive" : tone === "warn" ? "text-priority-high" : "text-primary";
+function BigKpi({
+  icon: Icon,
+  label,
+  value,
+  delta,
+  up,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  delta: string;
+  up?: boolean;
+  tone?: "warn" | "danger";
+}) {
+  const accent =
+    tone === "danger"
+      ? "text-destructive"
+      : tone === "warn"
+        ? "text-priority-high"
+        : "text-primary";
   return (
     <div className="rounded-2xl border border-border bg-surface p-5">
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground uppercase tracking-wider">{label}</div>
-        <div className={`size-9 rounded-lg bg-muted/60 flex items-center justify-center ${accent}`}><Icon className="size-4" /></div>
+        <div className={`size-9 rounded-lg bg-muted/60 flex items-center justify-center ${accent}`}>
+          <Icon className="size-4" />
+        </div>
       </div>
       <div className="mt-3 text-3xl font-semibold tracking-tight">{value}</div>
-      <div className={`mt-1 text-xs flex items-center gap-1 ${up ? "text-success" : "text-destructive"}`}>
+      <div
+        className={`mt-1 text-xs flex items-center gap-1 ${up ? "text-success" : "text-destructive"}`}
+      >
         {up ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
         {delta} vs prev period
       </div>
@@ -149,27 +201,56 @@ function BigKpi({ icon: Icon, label, value, delta, up, tone }: { icon: any; labe
 }
 
 function Legend({ color, label }: { color: string; label: string }) {
-  return <div className="flex items-center gap-1.5"><span className={`size-2.5 rounded-sm ${color}`} />{label}</div>;
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={`size-2.5 rounded-sm ${color}`} />
+      {label}
+    </div>
+  );
 }
 
 function DualChart({ bars, line }: { bars: number[]; line: number[] }) {
-  const w = 720, h = 220, pad = 24;
-  const maxB = Math.max(...bars), maxL = Math.max(...line);
+  const w = 720,
+    h = 220,
+    pad = 24;
+  const maxB = Math.max(...bars),
+    maxL = Math.max(...line);
   const bw = (w - pad * 2) / bars.length - 4;
-  const linePts = line.map((v, i) => {
-    const x = pad + i * ((w - pad * 2) / (line.length - 1));
-    const y = h - pad - (v / maxL) * (h - pad * 2);
-    return `${x},${y}`;
-  }).join(" ");
+  const linePts = line
+    .map((v, i) => {
+      const x = pad + i * ((w - pad * 2) / (line.length - 1));
+      const y = h - pad - (v / maxL) * (h - pad * 2);
+      return `${x},${y}`;
+    })
+    .join(" ");
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-56">
       {[0.25, 0.5, 0.75, 1].map((t) => (
-        <line key={t} x1={pad} x2={w - pad} y1={h - pad - t * (h - pad * 2)} y2={h - pad - t * (h - pad * 2)} stroke="currentColor" className="text-border" strokeWidth={1} />
+        <line
+          key={t}
+          x1={pad}
+          x2={w - pad}
+          y1={h - pad - t * (h - pad * 2)}
+          y2={h - pad - t * (h - pad * 2)}
+          stroke="currentColor"
+          className="text-border"
+          strokeWidth={1}
+        />
       ))}
       {bars.map((v, i) => {
         const x = pad + i * ((w - pad * 2) / bars.length);
         const bh = (v / maxB) * (h - pad * 2);
-        return <rect key={i} x={x} y={h - pad - bh} width={bw} height={bh} rx={2} className="fill-primary/70" />;
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={h - pad - bh}
+            width={bw}
+            height={bh}
+            rx={2}
+            className="fill-primary/70"
+          />
+        );
       })}
       <polyline points={linePts} fill="none" className="stroke-priority-high" strokeWidth={2.5} />
       {line.map((v, i) => {
@@ -197,7 +278,19 @@ function Donut() {
         <circle cx="80" cy="80" r="60" stroke="var(--muted)" strokeWidth="20" fill="none" />
         {segs.map((s, i) => {
           const len = (s.v / 100) * C;
-          const el = <circle key={i} cx="80" cy="80" r="60" stroke={s.c} strokeWidth="20" fill="none" strokeDasharray={`${len} ${C}`} strokeDashoffset={-acc} />;
+          const el = (
+            <circle
+              key={i}
+              cx="80"
+              cy="80"
+              r="60"
+              stroke={s.c}
+              strokeWidth="20"
+              fill="none"
+              strokeDasharray={`${len} ${C}`}
+              strokeDashoffset={-acc}
+            />
+          );
           acc += len;
           return el;
         })}

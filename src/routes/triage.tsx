@@ -130,7 +130,7 @@ export function Triage({ patientId }: { patientId: string }) {
                 {t("triage:vitalTime", { time: formatTime(triage.vitalsObservedAt, locale) })}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {triage.vitals.map((vital) => (
                 <Vital
                   key={vital.code}
@@ -477,7 +477,7 @@ function Vital({
           {t(`common:severity.${tone}`)}
         </span>
       </div>
-      <div className="mt-2 flex items-baseline gap-2">
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <div className="text-2xl font-semibold">{value}</div>
         <div className="text-xs text-muted-foreground">{unit}</div>
       </div>

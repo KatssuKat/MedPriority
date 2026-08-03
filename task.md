@@ -1,4 +1,6 @@
-# Backlog de la demo
+# Catálogo de requisitos de la demo
+
+Este archivo conserva el backlog original y sus criterios de alcance como referencia histórica. Sus casillas no representan el estado actual de implementación. La única fuente de seguimiento vigente es `phase-tasks.md`, donde las tareas se organizan por fase y se actualizan después de verificarse.
 
 ## Completado
 

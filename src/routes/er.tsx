@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Activity,
   AlertTriangle,
@@ -6,283 +6,291 @@ import {
   Clock,
   Filter,
   type LucideIcon,
+  Search,
   Users,
 } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppShell } from "@/components/AppShell";
+import { SimulationDialog } from "@/components/SimulationDialog";
+import { useDemoData } from "@/demo/DemoDataProvider";
+import type { DemoPatient, PatientStatus, ZoneCode } from "@/demo/domain";
+import { filterAndSortPatients, getErMetrics } from "@/demo/selectors";
+import type { Locale } from "@/i18n/config";
+import { formatMinutes, formatPercent, formatTime } from "@/i18n/format";
 
 export const Route = createFileRoute("/er")({
   component: ER,
-  head: () => ({ meta: [{ title: "ER Dashboard · MedPriority" }] }),
 });
 
-type Patient = {
-  id: string;
-  name: string;
-  age: number;
-  sex: "M" | "F";
-  complaint: string;
-  level: 1 | 2 | 3 | 4 | 5;
-  status: "Waiting" | "In treatment" | "Critical" | "Imaging" | "Discharging";
-  wait: string;
-  bay: string;
-  arrived: string;
-};
-
-const patients: Patient[] = [
-  {
-    id: "P-1041",
-    name: "Maria González",
-    age: 58,
-    sex: "F",
-    complaint: "Chest pain, dyspnea",
-    level: 2,
-    status: "Critical",
-    wait: "0 min",
-    bay: "R-1",
-    arrived: "14:22",
-  },
-  {
-    id: "P-1042",
-    name: "James O'Connor",
-    age: 71,
-    sex: "M",
-    complaint: "Stroke symptoms (FAST+)",
-    level: 1,
-    status: "Critical",
-    wait: "0 min",
-    bay: "R-2",
-    arrived: "14:18",
-  },
-  {
-    id: "P-1043",
-    name: "Aiko Tanaka",
-    age: 34,
-    sex: "F",
-    complaint: "Severe abdominal pain",
-    level: 2,
-    status: "In treatment",
-    wait: "8 min",
-    bay: "T-4",
-    arrived: "14:05",
-  },
-  {
-    id: "P-1044",
-    name: "Daniel Smith",
-    age: 22,
-    sex: "M",
-    complaint: "Lacerated forearm",
-    level: 3,
-    status: "Imaging",
-    wait: "14 min",
-    bay: "T-7",
-    arrived: "13:58",
-  },
-  {
-    id: "P-1045",
-    name: "Fatima Al-Hasan",
-    age: 67,
-    sex: "F",
-    complaint: "Shortness of breath",
-    level: 2,
-    status: "In treatment",
-    wait: "5 min",
-    bay: "T-2",
-    arrived: "13:55",
-  },
-  {
-    id: "P-1046",
-    name: "Carlos Mendes",
-    age: 45,
-    sex: "M",
-    complaint: "Fever, chills, cough",
-    level: 4,
-    status: "Waiting",
-    wait: "32 min",
-    bay: "—",
-    arrived: "13:48",
-  },
-  {
-    id: "P-1047",
-    name: "Hannah Lee",
-    age: 9,
-    sex: "F",
-    complaint: "Asthma exacerbation",
-    level: 3,
-    status: "In treatment",
-    wait: "2 min",
-    bay: "P-1",
-    arrived: "13:42",
-  },
-  {
-    id: "P-1048",
-    name: "Robert Klein",
-    age: 60,
-    sex: "M",
-    complaint: "Knee injury",
-    level: 4,
-    status: "Waiting",
-    wait: "41 min",
-    bay: "—",
-    arrived: "13:30",
-  },
-  {
-    id: "P-1049",
-    name: "Sofia Rivera",
-    age: 28,
-    sex: "F",
-    complaint: "Migraine",
-    level: 5,
-    status: "Waiting",
-    wait: "58 min",
-    bay: "—",
-    arrived: "13:18",
-  },
-  {
-    id: "P-1050",
-    name: "Ethan Walker",
-    age: 51,
-    sex: "M",
-    complaint: "Post-op check",
-    level: 5,
-    status: "Discharging",
-    wait: "—",
-    bay: "T-9",
-    arrived: "12:55",
-  },
-];
-
-const LEVEL_META: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: "Resuscitation", color: "text-white", bg: "bg-priority-critical" },
-  2: { label: "Emergent", color: "text-white", bg: "bg-priority-high" },
-  3: { label: "Urgent", color: "text-foreground", bg: "bg-priority-medium" },
-  4: { label: "Less urgent", color: "text-white", bg: "bg-priority-low" },
-  5: { label: "Non-urgent", color: "text-white", bg: "bg-priority-minor" },
+const levelStyles: Record<DemoPatient["level"], { color: string; bg: string }> = {
+  1: { color: "text-white", bg: "bg-priority-critical" },
+  2: { color: "text-foreground", bg: "bg-priority-high" },
+  3: { color: "text-foreground", bg: "bg-priority-medium" },
+  4: { color: "text-foreground", bg: "bg-priority-low" },
+  5: { color: "text-foreground", bg: "bg-priority-minor" },
 };
 
 function ER() {
+  const { t, i18n } = useTranslation();
+  const {
+    patients,
+    activeAlerts,
+    addSamplePatient,
+    acknowledgeAlerts,
+    dataStatus,
+    hydrated,
+    resetPatients,
+  } = useDemoData();
+  const [zone, setZone] = useState<"all" | ZoneCode>("all");
+  const [query, setQuery] = useState("");
+  const [simulation, setSimulation] = useState<string | null>(null);
+  const [addingPatient, setAddingPatient] = useState(false);
+  const [resettingPatients, setResettingPatients] = useState(false);
+  const [acknowledgingAlerts, setAcknowledgingAlerts] = useState(false);
+  const [result, setResult] = useState(false);
+  const locale = (i18n.resolvedLanguage === "en" ? "en" : "es") as Locale;
+  const visiblePatients = filterAndSortPatients(patients, { query, zone });
+  const metrics = getErMetrics(visiblePatients, zone);
+
   return (
     <AppShell>
       <div className="space-y-6">
-        <div className="flex items-end justify-between flex-wrap gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Emergency Department · Live Board</h1>
-            <p className="text-sm text-muted-foreground">
-              Sorted by acuity · auto-refresh every 5s
-            </p>
+            <h1 className="text-2xl font-semibold">{t("er:title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("er:subtitle")}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-border bg-surface text-sm">
-              <Filter className="size-4 text-muted-foreground" />
-              <select className="bg-transparent focus:outline-none text-sm">
-                <option>All zones</option>
-                <option>Resus</option>
-                <option>Trauma</option>
-                <option>Pediatrics</option>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm">
+              <Filter className="size-4 text-muted-foreground" aria-hidden="true" />
+              <span className="sr-only">{t("er:filter")}</span>
+              <select
+                value={zone}
+                onChange={(event) => setZone(event.target.value as "all" | ZoneCode)}
+                className="bg-transparent focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">{t("common:zones.all")}</option>
+                <option value="resuscitation">{t("common:zones.resuscitation")}</option>
+                <option value="trauma">{t("common:zones.trauma")}</option>
+                <option value="pediatrics">{t("common:zones.pediatrics")}</option>
               </select>
-            </div>
-            <button className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
-              + Add patient
+            </label>
+            <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm focus-within:ring-2 focus-within:ring-ring">
+              <Search className="size-4 text-muted-foreground" aria-hidden="true" />
+              <span className="sr-only">{t("er:search")}</span>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t("er:search")}
+                className="w-36 bg-transparent text-sm outline-none placeholder:text-muted-foreground sm:w-48"
+              />
+            </label>
+            <button
+              onClick={() => {
+                setAddingPatient(true);
+                setSimulation(t("er:add"));
+              }}
+              className="h-11 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+            >
+              {t("er:add")}
+            </button>
+            <button
+              onClick={() => {
+                setResettingPatients(true);
+                setSimulation(t("er:reset"));
+              }}
+              className="h-11 rounded-lg border border-border bg-surface px-4 text-sm font-medium"
+            >
+              {t("er:reset")}
             </button>
           </div>
         </div>
 
-        {/* KPI strip */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Kpi icon={Users} label="In ED" value="47" />
-          <Kpi icon={AlertTriangle} label="Critical" value="3" tone="critical" />
-          <Kpi icon={Clock} label="Avg wait" value="18m" />
-          <Kpi icon={BedDouble} label="Beds free" value="6 / 32" />
-          <Kpi icon={Activity} label="Saturation" value="78%" tone="high" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+          <Kpi icon={Users} label={t("er:kpis.inEd")} value={String(metrics.patientCount)} />
+          <Kpi
+            icon={AlertTriangle}
+            label={t("er:kpis.critical")}
+            value={String(metrics.criticalCount)}
+            tone="critical"
+          />
+          <Kpi
+            icon={Clock}
+            label={t("er:kpis.wait")}
+            value={formatMinutes(Math.round(metrics.averageWait), locale)}
+          />
+          <Kpi
+            icon={BedDouble}
+            label={t("er:kpis.beds")}
+            value={`${metrics.availableCapacity} / ${metrics.totalCapacity}`}
+          />
+          <Kpi
+            icon={Activity}
+            label={t("er:kpis.saturation")}
+            value={formatPercent(metrics.saturation, locale)}
+            tone={metrics.saturation >= 0.75 ? "high" : undefined}
+          />
         </div>
 
-        {/* Critical strip */}
-        <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 flex items-center gap-4">
-          <div className="size-10 rounded-xl bg-destructive/15 text-destructive flex items-center justify-center">
-            <AlertTriangle className="size-5" />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-destructive">2 critical alerts</div>
-            <div className="text-sm text-muted-foreground">
-              James O'Connor (FAST+ stroke) · Maria González (suspected ACS) — both require
-              immediate physician attention.
+        {!hydrated && (
+          <p className="text-sm text-destructive" role="alert">
+            {t("er:dataLoading")}
+          </p>
+        )}
+        {dataStatus === "restored" && (
+          <p className="text-sm text-muted-foreground" role="status">
+            {t("er:dataRestored")}
+          </p>
+        )}
+        {dataStatus === "unavailable" && (
+          <p className="text-sm text-muted-foreground" role="status">
+            {t("er:dataUnavailable")}
+          </p>
+        )}
+
+        {activeAlerts.length > 0 && (
+          <div
+            className="flex flex-wrap items-center gap-4 rounded-2xl border border-destructive/40 bg-destructive/5 p-4"
+            role="region"
+            aria-labelledby="er-alert-title"
+          >
+            <div className="flex size-10 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
+              <AlertTriangle className="size-5" aria-hidden="true" />
             </div>
+            <div className="min-w-0 flex-1">
+              <div id="er-alert-title" className="font-semibold text-destructive">
+                {t("er:alerts", { count: activeAlerts.length })}
+              </div>
+              <div className="text-sm text-muted-foreground">{t("er:alertDescription")}</div>
+            </div>
+            <button
+              onClick={() => {
+                setAcknowledgingAlerts(true);
+                setSimulation(t("er:acknowledge"));
+              }}
+              className="h-11 rounded-lg bg-destructive px-4 text-sm font-semibold text-destructive-foreground"
+            >
+              {t("er:acknowledge")}
+            </button>
           </div>
-          <button className="h-10 px-4 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold">
-            Acknowledge
-          </button>
-        </div>
+        )}
 
-        {/* Patient table */}
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-          <table className="w-full text-sm">
+        <p className="text-xs text-muted-foreground">{t("er:sort")}</p>
+        <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
+          <table className="w-full min-w-[760px] text-sm">
+            <caption className="sr-only">{t("er:table.caption")}</caption>
             <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="text-left px-4 py-3">Priority</th>
-                <th className="text-left px-4 py-3">Patient</th>
-                <th className="text-left px-4 py-3">Chief complaint</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Wait</th>
-                <th className="text-left px-4 py-3">Bay</th>
-                <th className="text-left px-4 py-3">Arrived</th>
-                <th className="px-4 py-3" />
+                {[
+                  "priority",
+                  "patient",
+                  "complaint",
+                  "status",
+                  "wait",
+                  "bay",
+                  "arrived",
+                  "actions",
+                ].map((column) => (
+                  <th key={column} scope="col" className="px-4 py-3 text-left">
+                    {t(`er:table.${column}`)}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {patients.map((p) => {
-                const meta = LEVEL_META[p.level];
-                const critical = p.status === "Critical";
-                return (
-                  <tr
-                    key={p.id}
-                    className={`border-t border-border hover:bg-muted/30 ${critical ? "bg-destructive/[0.04]" : ""}`}
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`size-9 rounded-lg ${meta.bg} ${meta.color} flex items-center justify-center font-bold`}
-                        >
-                          {p.level}
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">L{p.level}</div>
-                          <div className="text-muted-foreground">{meta.label}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium flex items-center gap-2">
-                        {p.name}
-                        {critical && (
-                          <span className="size-2 rounded-full bg-destructive pulse-dot" />
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {p.id} · {p.age}
-                        {p.sex}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 max-w-xs">{p.complaint}</td>
-                    <td className="px-4 py-3">
-                      <StatusPill status={p.status} />
-                    </td>
-                    <td
-                      className={`px-4 py-3 font-mono ${parseInt(p.wait, 10) > 30 ? "text-priority-high font-semibold" : ""}`}
-                    >
-                      {p.wait}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-muted-foreground">{p.bay}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{p.arrived}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button className="text-primary text-xs font-medium">Open</button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {visiblePatients.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                    {t("er:empty")}
+                  </td>
+                </tr>
+              ) : (
+                visiblePatients.map((patient) => (
+                  <PatientRow key={patient.id} patient={patient} locale={locale} />
+                ))
+              )}
             </tbody>
           </table>
         </div>
+        {result && (
+          <p role="status" className="text-sm text-success">
+            {t("common:simulation.complete")}
+          </p>
+        )}
       </div>
+      <SimulationDialog
+        action={simulation}
+        onClose={() => {
+          setSimulation(null);
+          setAddingPatient(false);
+          setResettingPatients(false);
+          setAcknowledgingAlerts(false);
+        }}
+        onConfirm={() => {
+          if (addingPatient) addSamplePatient();
+          if (resettingPatients) resetPatients();
+          if (acknowledgingAlerts) acknowledgeAlerts();
+          setAddingPatient(false);
+          setResettingPatients(false);
+          setAcknowledgingAlerts(false);
+          setSimulation(null);
+          setResult(true);
+        }}
+      />
     </AppShell>
+  );
+}
+
+function PatientRow({ patient, locale }: { patient: DemoPatient; locale: Locale }) {
+  const { t } = useTranslation();
+  const meta = levelStyles[patient.level];
+  return (
+    <tr
+      className={`border-t border-border hover:bg-muted/30 ${patient.status === "critical" ? "bg-destructive/[0.04]" : ""}`}
+    >
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div
+            className={`flex size-9 items-center justify-center rounded-lg font-bold ${meta.bg} ${meta.color}`}
+          >
+            {patient.level}
+          </div>
+          <div className="text-xs">
+            <div className="font-medium">L{patient.level}</div>
+            <div className="text-muted-foreground">{t(`common:esi.${patient.level}`)}</div>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="font-medium">{patient.name}</div>
+        <div className="text-xs text-muted-foreground">
+          {patient.id}
+          {patient.age !== null && patient.sex !== null && ` · ${patient.age}${patient.sex}`}
+        </div>
+      </td>
+      <td className="px-4 py-3">{t(`er:complaints.${patient.complaint}`)}</td>
+      <td className="px-4 py-3">
+        <StatusPill status={patient.status} />
+      </td>
+      <td
+        className={`px-4 py-3 font-mono ${patient.waitMinutes !== null && patient.waitMinutes > 30 ? "font-semibold text-foreground underline decoration-priority-high decoration-2 underline-offset-4" : ""}`}
+      >
+        {patient.waitMinutes === null ? "—" : formatMinutes(patient.waitMinutes, locale)}
+      </td>
+      <td className="px-4 py-3 font-mono text-muted-foreground">{patient.bay ?? "—"}</td>
+      <td className="px-4 py-3 text-muted-foreground">{formatTime(patient.arrivedAt, locale)}</td>
+      <td className="px-4 py-3 text-right">
+        <Link
+          to="/triage/$patientId"
+          params={{ patientId: patient.id }}
+          aria-label={t("er:table.openPatient", { patient: patient.name, id: patient.id })}
+          className="inline-flex min-h-11 items-center text-xs font-medium text-primary"
+        >
+          {t("er:table.open")}
+        </Link>
+      </td>
+    </tr>
   );
 }
 
@@ -297,32 +305,34 @@ function Kpi({
   value: string;
   tone?: "critical" | "high";
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         {label}
         <Icon
           className={`size-4 ${tone === "critical" ? "text-destructive" : tone === "high" ? "text-priority-high" : "text-primary"}`}
+          aria-hidden="true"
         />
       </div>
-      <div
-        className={`mt-2 text-2xl font-semibold ${tone === "critical" ? "text-destructive" : ""}`}
-      >
-        {value}
-      </div>
+      <div className="mt-2 text-2xl font-semibold">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{t("common:synthetic")}</div>
     </div>
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    Waiting: "bg-muted text-muted-foreground",
-    "In treatment": "bg-info/15 text-info border border-info/30",
-    Critical: "bg-destructive/15 text-destructive border border-destructive/30",
-    Imaging: "bg-accent text-accent-foreground",
-    Discharging: "bg-success/15 text-success border border-success/30",
+function StatusPill({ status }: { status: PatientStatus }) {
+  const { t } = useTranslation();
+  const styles: Record<PatientStatus, string> = {
+    waiting: "bg-muted text-foreground",
+    treatment: "border border-info/30 bg-info/15 text-foreground",
+    critical: "border border-destructive/30 bg-destructive/15 text-foreground",
+    imaging: "bg-accent text-foreground",
+    discharging: "border border-success/30 bg-success/15 text-foreground",
   };
   return (
-    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${map[status]}`}>{status}</span>
+    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${styles[status]}`}>
+      {t(`common:status.${status}`)}
+    </span>
   );
 }

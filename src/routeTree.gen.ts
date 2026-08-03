@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ErRouteImport } from './routes/er'
 import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as TriageRouteImport } from './routes/triage'
+import { Route as TriagePatientIdRouteImport } from './routes/triage_.$patientId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const TriageRoute = TriageRouteImport.update({
   path: '/triage',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TriagePatientIdRoute = TriagePatientIdRouteImport.update({
+  id: '/triage_/$patientId',
+  path: '/triage/$patientId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/er': typeof ErRoute
   '/kiosk': typeof KioskRoute
   '/triage': typeof TriageRoute
+  '/triage/$patientId': typeof TriagePatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/er': typeof ErRoute
   '/kiosk': typeof KioskRoute
   '/triage': typeof TriageRoute
+  '/triage/$patientId': typeof TriagePatientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,22 @@ export interface FileRoutesById {
   '/er': typeof ErRoute
   '/kiosk': typeof KioskRoute
   '/triage': typeof TriageRoute
+  '/triage_/$patientId': typeof TriagePatientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/er' | '/kiosk' | '/triage'
+  fullPaths:
+    '/' | '/admin' | '/er' | '/kiosk' | '/triage' | '/triage/$patientId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/er' | '/kiosk' | '/triage'
-  id: '__root__' | '/' | '/admin' | '/er' | '/kiosk' | '/triage'
+  to: '/' | '/admin' | '/er' | '/kiosk' | '/triage' | '/triage/$patientId'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/er'
+    | '/kiosk'
+    | '/triage'
+    | '/triage_/$patientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +94,7 @@ export interface RootRouteChildren {
   ErRoute: typeof ErRoute
   KioskRoute: typeof KioskRoute
   TriageRoute: typeof TriageRoute
+  TriagePatientIdRoute: typeof TriagePatientIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TriageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/triage_/$patientId': {
+      id: '/triage_/$patientId'
+      path: '/triage/$patientId'
+      fullPath: '/triage/$patientId'
+      preLoaderRoute: typeof TriagePatientIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   ErRoute: ErRoute,
   KioskRoute: KioskRoute,
   TriageRoute: TriageRoute,
+  TriagePatientIdRoute: TriagePatientIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -47,6 +47,24 @@ async function gotoHydrated(page: import("@playwright/test").Page, path: string)
   await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true");
 }
 
+async function getHorizontalOverflow(page: import("@playwright/test").Page) {
+  return page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+    elements: Array.from(document.body.querySelectorAll<HTMLElement>("*"))
+      .filter((element) => {
+        const bounds = element.getBoundingClientRect();
+        return bounds.left < -1 || bounds.right > window.innerWidth + 1;
+      })
+      .slice(0, 5)
+      .map((element) => ({
+        className: element.getAttribute("class") ?? "",
+        tag: element.tagName.toLowerCase(),
+        text: element.textContent?.trim().slice(0, 80),
+      })),
+  }));
+}
+
 for (const [locale, copy] of Object.entries(locales)) {
   test(`completes the kiosk to triage flow in ${locale}`, async ({ page }) => {
     await page
@@ -244,10 +262,11 @@ test("keeps mobile navigation, dialogs, and layouts keyboard-safe", async ({ pag
     for (const width of [320, 375, 768, 1024]) {
       await page.setViewportSize({ width, height: 900 });
       await gotoHydrated(page, path);
+      const overflow = await getHorizontalOverflow(page);
       expect(
-        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
-        `${path} overflows at ${width}px`,
-      ).toBe(true);
+        overflow.documentWidth,
+        `${path} overflows at ${width}px: ${JSON.stringify(overflow.elements)}`,
+      ).toBeLessThanOrEqual(overflow.viewportWidth);
     }
   }
 

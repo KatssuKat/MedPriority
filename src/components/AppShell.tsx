@@ -41,7 +41,7 @@ export function AppShell({ children, dense = false }: { children: ReactNode; den
       </a>
       <aside
         aria-label={t("common:shell.navigation")}
-        className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex"
+        className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex"
       >
         <div className="px-6 py-6 flex items-center gap-3 border-b border-sidebar-border">
           <div className="size-9 rounded-xl bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground">
@@ -64,11 +64,11 @@ export function AppShell({ children, dense = false }: { children: ReactNode; den
           <button
             aria-label={t("common:shell.menu")}
             onClick={() => setMobileNavOpen(true)}
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-ring md:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-ring lg:hidden"
           >
             <Menu className="size-5" aria-hidden="true" />
           </button>
-          <div className="relative hidden max-w-md flex-1 sm:block">
+          <div className="relative hidden min-w-0 max-w-md flex-1 sm:block">
             <Search
               className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               aria-hidden="true"
